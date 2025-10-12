@@ -1,0 +1,12 @@
+[Unit]
+Description=Brightness Control Service
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/brightness_control
+Restart=on-failure
+User=root
+
+[Install]
+WantedBy=multi-user.target
