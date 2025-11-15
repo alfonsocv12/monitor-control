@@ -49,10 +49,10 @@ bool KeyboardController::init() {
                 << std::endl;
       continue;
     }
-    fds.push_back(fd);
+    fileDescriptors.push_back(fd);
   }
 
-  if (fds.empty()) {
+  if (fileDescriptors.empty()) {
     return false;
   }
 
@@ -67,7 +67,7 @@ void KeyboardController::monitor(KBindings bindings) {
     FD_ZERO(&readfds);
     int max_fd = 0;
 
-    for (int fd : fds) {
+    for (int fd : fileDescriptors) {
       FD_SET(fd, &readfds);
       if (fd > max_fd) max_fd = fd;
     }
@@ -82,7 +82,7 @@ void KeyboardController::monitor(KBindings bindings) {
       break;
     }
 
-    for (int fd : fds) {
+    for (int fd : fileDescriptors) {
       if (FD_ISSET(fd, &readfds)) {
         ssize_t n = read(fd, &ev, sizeof(ev));
         if (n == sizeof(ev)) {
