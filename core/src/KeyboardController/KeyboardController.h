@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-// typedef void (*KActionCallback)();
 typedef std::function<void()> KActionCallback;
 
 struct Binding {
@@ -22,7 +21,7 @@ typedef std::vector<Binding> KBindings;
 class KeyboardController {
  private:
   // todo: change name of fds
-  std::vector<int> fds;
+  std::vector<int> fileDescriptors;
   std::vector<std::string> findKeyboardDevices();
 
  public:
