@@ -2,11 +2,12 @@ CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2
 LDFLAGS = -lddcutil
 TARGET = ./build/main
-SRC = ./src/main.cpp
+SRC = ./src/main.cpp ./src/KeyboardController/KeyboardController.cpp ./src/BrightnessController/BrightnessController.cpp
 
 all: $(TARGET)
 
 compile:
+	mkdir -p ./build
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
 
 clean:
@@ -21,5 +22,8 @@ uninstall:
 
 run: $(TARGET)
 	sudo ./$(TARGET)
+
+format:
+	find src/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i -style=Google
 
 .PHONY: all clean install uninstall run
