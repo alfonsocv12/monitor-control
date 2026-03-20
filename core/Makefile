@@ -1,8 +1,8 @@
 CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2
 LDFLAGS = -lddcutil
-TARGET = ./build/main
-SRC = ./src/main.cpp ./src/KeyboardController/KeyboardController.cpp ./src/BrightnessController/BrightnessController.cpp
+TARGET = ./build/brightness_control
+SRC = ./src/brightness_control.cpp ./src/KeyboardController/KeyboardController.cpp ./src/BrightnessController/BrightnessController.cpp
 
 all: $(TARGET)
 
@@ -15,6 +15,7 @@ clean:
 
 install: $(TARGET)
 	sudo cp $(TARGET) /usr/local/bin/
+	sudo cp core/monitor-control.service /etc/systemd/system/
 	@echo "Installed to /usr/local/bin/$(TARGET)"
 
 uninstall:
@@ -27,3 +28,4 @@ format:
 	find src/ -iname '*.h' -o -iname '*.cpp' | xargs clang-format -i -style=Google
 
 .PHONY: all clean install uninstall run
+
