@@ -20,11 +20,13 @@ int main() {
     return 0;
   }
 
+  using std::placeholders::_1;
+
   KBindings bindings = {
       Binding{KEY_BRIGHTNESSUP,
-              bind(&BrightnessController::onBrightnessUp, &monitorCtrl)},
+              bind(&BrightnessController::onBrightnessUp, &monitorCtrl, _1)},
       Binding{KEY_BRIGHTNESSDOWN,
-              bind(&BrightnessController::onBrightnessDown, &monitorCtrl)}};
+              bind(&BrightnessController::onBrightnessDown, &monitorCtrl, _1)}};
 
   keyboard.monitor(bindings);
 }

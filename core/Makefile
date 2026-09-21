@@ -2,6 +2,8 @@ CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2
 LDFLAGS = -lddcutil
 TARGET = ./build/main
+# Must match ExecStart in monitor-control.service
+INSTALL_PATH = /usr/local/bin/brightness_control
 SRC = ./src/main.cpp ./src/KeyboardController/KeyboardController.cpp ./src/BrightnessController/BrightnessController.cpp
 
 all: $(TARGET)
@@ -14,11 +16,11 @@ clean:
 	rm -f $(TARGET)
 
 install: $(TARGET)
-	sudo cp $(TARGET) /usr/local/bin/
-	@echo "Installed to /usr/local/bin/$(TARGET)"
+	sudo cp $(TARGET) $(INSTALL_PATH)
+	@echo "Installed to $(INSTALL_PATH)"
 
 uninstall:
-	sudo rm -f /usr/local/bin/$(TARGET)
+	sudo rm -f $(INSTALL_PATH)
 
 run: $(TARGET)
 	sudo ./$(TARGET)
