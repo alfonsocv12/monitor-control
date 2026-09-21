@@ -41,7 +41,8 @@ bool KeyboardController::init() {
   }
 
   for (const auto& device : devices) {
-    int fd = open(device.c_str(), O_RDONLY);
+    // Non-blocking so pending events can be drained without stalling.
+    int fd = open(device.c_str(), O_RDONLY | O_NONBLOCK);
     if (fd < 0) {
       std::cerr << "Cannot open " << device << ": " << strerror(errno)
                 << std::endl;
@@ -59,9 +60,44 @@ bool KeyboardController::init() {
   return true;
 }
 
+std::vector<KeyPress> KeyboardController::readPressedKeys() {
+  std::vector<KeyPress> presses;
+  struct input_event ev;
+
+  // Drain every queued event and tally repeats, so a fast burst of presses
+  // becomes one invocation carrying the count rather than one action per
+  // event. Callbacks here can block, and dispatching each event separately
+  // would keep firing long after the user stopped pressing.
+  for (int fd : fileDescriptors) {
+    while (read(fd, &ev, sizeof(ev)) == sizeof(ev)) {
+      if (ev.type != EV_KEY || ev.value != 1) continue;
+
+      auto match = std::find_if(
+          presses.begin(), presses.end(),
+          [&ev](const KeyPress& press) { return press.key == (int)ev.code; });
+
+      if (match == presses.end()) {
+        presses.push_back(KeyPress{(int)ev.code, 1});
+      } else {
+        match->count++;
+      }
+    }
+  }
+
+  return presses;
+}
+
+void KeyboardController::discardPendingEvents() {
+  struct input_event ev;
+
+  for (int fd : fileDescriptors) {
+    while (read(fd, &ev, sizeof(ev)) == sizeof(ev)) {
+    }
+  }
+}
+
 void KeyboardController::monitor(KBindings bindings) {
   fd_set readfds;
-  struct input_event ev;
 
   while (true) {
     FD_ZERO(&readfds);
@@ -82,19 +118,17 @@ void KeyboardController::monitor(KBindings bindings) {
       break;
     }
 
-    for (int fd : fileDescriptors) {
-      if (FD_ISSET(fd, &readfds)) {
-        ssize_t n = read(fd, &ev, sizeof(ev));
-        if (n == sizeof(ev)) {
-          if (ev.type == EV_KEY && ev.value == 1) {
-            for (Binding binding : bindings) {
-              if (ev.code == binding.key) {
-                binding.callback();
-              }
-            }
-          }
+    for (const KeyPress& press : readPressedKeys()) {
+      for (const Binding& binding : bindings) {
+        if (press.key == binding.key) {
+          binding.callback(press.count);
         }
       }
     }
+
+    // Presses that arrived while the callbacks ran are stale. Replaying them
+    // is what turns one slow DDC call into a burst aimed at a display that is
+    // still coming back up.
+    discardPendingEvents();
   }
 }
