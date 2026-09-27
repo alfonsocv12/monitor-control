@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <linux/input.h>
+#include <sys/inotify.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -27,9 +28,19 @@ struct KeyPress {
 
 class KeyboardController {
  private:
-  // todo: change name of fds
-  std::vector<int> fileDescriptors;
-  std::vector<std::string> findKeyboardDevices();
+  struct InputDevice {
+    int fd;
+    std::string path;
+  };
+
+  std::vector<InputDevice> devices;
+  // Watches /dev/input so devices plugged in after startup are picked up.
+  // IN_ATTRIB too: udev grants group access only after the node is created.
+  int hotplugFd = -1;
+  bool isKeyDevice(const std::string& path, std::string& name);
+  void addDevice(const std::string& path);
+  void addHotpluggedDevices();
+  void readEvents(const std::function<void(const input_event&)>& onEvent);
   std::vector<KeyPress> readPressedKeys();
   void discardPendingEvents();
 
